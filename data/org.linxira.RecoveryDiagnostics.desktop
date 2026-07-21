@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Linxira Recovery Diagnostics
+Comment=Inspect recovery readiness and create read-only repair plans
+Exec=/usr/bin/linxira-recovery-diagnostics-gui
+Icon=org.linxira.RecoveryDiagnostics
+Terminal=false
+Categories=System;Filesystem;
+Keywords=recovery;diagnostics;snapshot;btrfs;
+StartupNotify=true

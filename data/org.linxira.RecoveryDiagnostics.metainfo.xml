@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.linxira.RecoveryDiagnostics</id>
+  <name>Linxira Recovery Diagnostics</name>
+  <summary>Inspect recovery readiness and create repair plans</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>Read-only diagnostics for Btrfs, Timeshift, package recovery, boot files, and live-system chroot readiness.</p>
+    <p>The application creates reviewable plans and privacy-filtered local support bundles. It does not apply repairs.</p>
+  </description>
+  <launchable type="desktop-id">org.linxira.RecoveryDiagnostics.desktop</launchable>
+  <developer id="org.linxira"><name>Linxira OS</name></developer>
+  <content_rating type="oars-1.1" />
+  <url type="homepage">https://github.com/Linxira-OS/linxira-recovery-diagnostics</url>
+  <releases>
+    <release version="0.1.0" date="2026-07-21" />
+  </releases>
+</component>

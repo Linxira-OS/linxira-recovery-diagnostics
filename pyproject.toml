@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "linxira-recovery-diagnostics"
+version = "0.1.0"
+description = "Read-only recovery diagnostics and repair planning for Linxira OS"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Linxira OS"}]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+]
+dependencies = ["PySide6>=6.7"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "build>=1.2"]
+
+[project.scripts]
+linxira-recovery-diagnostics = "linxira_recovery_diagnostics.cli:main"
+
+[project.gui-scripts]
+linxira-recovery-diagnostics-gui = "linxira_recovery_diagnostics.gui:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/linxira_recovery_diagnostics"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"data/org.linxira.RecoveryDiagnostics.desktop" = "share/applications/org.linxira.RecoveryDiagnostics.desktop"
+"data/org.linxira.RecoveryDiagnostics.metainfo.xml" = "share/metainfo/org.linxira.RecoveryDiagnostics.metainfo.xml"
+"data/org.linxira.RecoveryDiagnostics.svg" = "share/icons/hicolor/scalable/apps/org.linxira.RecoveryDiagnostics.svg"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
