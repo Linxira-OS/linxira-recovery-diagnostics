@@ -1,13 +1,13 @@
 # Linxira Recovery Diagnostics
 
-Linxira Recovery Diagnostics is a read-only evidence and repair-planning application for installed Linxira systems and Linxira/Arch live environments. The MVP does not perform repairs.
+Linxira Recovery Diagnostics is a read-only evidence and repair-planning application for installed Linxira systems and Linxira/Arch live environments. Pacman-lock diagnosis and live-chroot readiness can be confirmed and executed through the root-owned Linxira system transaction service; all repair operations remain disabled.
 
 ## Safety boundary
 
 - Evidence paths are compiled into the application. Only `/` and `/mnt` are inspected as system roots.
 - External processes use exact argv allowlists for `findmnt`, `lsblk`, Timeshift listing, and read-only `systemctl is-enabled`/`is-active` queries.
-- There is no shell execution, privilege escalation, mount/chroot operation, package mutation, service mutation, arbitrary path option, or snapshot identifier input.
-- Every plan reports `apply-backend-not-ready`. Rollback additionally requires a future trusted root-helper receipt and never accepts a snapshot or path ID.
+- There is no shell execution, mount/chroot operation, package mutation, service mutation, arbitrary path option, or snapshot identifier input.
+- Only two fixed read-only diagnostics use the system D-Bus service. Snapshot, rollback, keyring repair, and chroot repair plans report `apply-backend-not-ready`.
 - Pacman lock handling is diagnosis only. The lock is never deleted.
 
 ## Usage

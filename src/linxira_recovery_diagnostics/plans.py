@@ -4,6 +4,10 @@ from copy import deepcopy
 from typing import Any
 
 PLAN_SCHEMA = "org.linxira.recovery-diagnostics.plan"
+SYSTEM_OPERATION_IDS = frozenset({
+    "org.linxira.recovery.pacman-lock-diagnose.v1",
+    "org.linxira.recovery.live-chroot-readiness.v1",
+})
 
 _PLANS: dict[str, dict[str, Any]] = {
     "org.linxira.snapshot.create-prechange.v1": {
@@ -46,7 +50,8 @@ def make_plan(plan_id: str, report: dict[str, Any]) -> dict[str, Any]:
     if plan_id not in _PLANS:
         raise ValueError("unknown plan ID")
     definition = deepcopy(_PLANS[plan_id])
-    reasons = ["apply-backend-not-ready"]
+    backend_ready = plan_id in SYSTEM_OPERATION_IDS
+    reasons = [] if backend_ready else ["apply-backend-not-ready"]
     if definition.pop("receipt_required", False):
         reasons.append("future-root-receipt-required")
     if plan_id == "org.linxira.snapshot.create-prechange.v1":
@@ -56,22 +61,18 @@ def make_plan(plan_id: str, report: dict[str, Any]) -> dict[str, Any]:
             reasons.append("btrfs-not-detected")
         if any(item.get("low") for item in report.get("storage", {}).get("space", [])):
             reasons.append("snapshot-space-low")
-    if plan_id == "org.linxira.recovery.pacman-lock-diagnose.v1":
-        pacman = report.get("pacman", {})
-        if not pacman.get("lock", {}).get("exists"):
-            reasons.append("pacman-lock-not-present")
-        if pacman.get("active_package_processes"):
-            reasons.append("package-manager-active")
     if plan_id == "org.linxira.recovery.keyring-repair.v1":
         prerequisites = report.get("keyring", {}).get("prerequisites", {})
         if not prerequisites.get("clock_sane"):
             reasons.append("system-clock-not-sane")
         if not prerequisites.get("network_interface_up") or not prerequisites.get("default_ipv4_route"):
             reasons.append("network-route-unavailable")
-    if plan_id == "org.linxira.recovery.live-chroot-readiness.v1" and not report.get("installed_target", {}).get("ready"):
-        reasons.append("fixed-live-target-not-ready")
     return {
         "schema": PLAN_SCHEMA, "schema_version": 1, "plan_id": plan_id,
-        **definition, "available": False, "unavailable_reasons": reasons,
-        "apply": {"backend": "not-ready", "accepts_user_input": False},
+        **definition, "available": backend_ready, "unavailable_reasons": reasons,
+        "apply": {
+            "backend": "org.linxira.Components1" if backend_ready else "not-ready",
+            "accepts_user_input": False,
+            "read_only": backend_ready,
+        },
     }

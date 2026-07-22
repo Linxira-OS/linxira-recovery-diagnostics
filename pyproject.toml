@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "linxira-recovery-diagnostics"
-version = "0.1.0"
+version = "0.2.0"
 description = "Read-only recovery diagnostics and repair planning for Linxira OS"
 readme = "README.md"
 requires-python = ">=3.11"
