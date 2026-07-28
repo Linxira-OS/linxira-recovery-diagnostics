@@ -6,13 +6,14 @@ from collections.abc import Sequence
 from typing import Any
 
 from PySide6.QtCore import QThread, Qt, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QAction, QFont
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QDialog, QDialogButtonBox, QFrame, QHBoxLayout,
     QLabel, QMainWindow, QMessageBox, QPushButton, QTabWidget, QTextBrowser,
     QVBoxLayout, QWidget,
 )
 
+from .about import show_about
 from .backend import Transaction, confirm_and_apply, create_plan
 from .collector import EvidenceCollector
 from .plans import PLAN_IDS, make_plan
@@ -87,6 +88,9 @@ class MainWindow(QMainWindow):
         tabs.addTab(self._repairs(), "Repairs")
         tabs.addTab(self._support(), "Support report")
         self.setCentralWidget(tabs)
+        about = QAction("About Linxira Recovery Diagnostics", self)
+        about.triggered.connect(lambda: show_about(self))
+        self.menuBar().addMenu("Help").addAction(about)
 
     def closeEvent(self, event):
         workers = (self.plan_worker, self.apply_worker)

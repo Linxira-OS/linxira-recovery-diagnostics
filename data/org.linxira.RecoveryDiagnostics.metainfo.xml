@@ -12,7 +12,10 @@
   <launchable type="desktop-id">org.linxira.RecoveryDiagnostics.desktop</launchable>
   <developer id="org.linxira"><name>Linxira OS</name></developer>
   <content_rating type="oars-1.1" />
-  <url type="homepage">https://github.com/Linxira-OS/linxira-recovery-diagnostics</url>
+  <url type="homepage">https://linxira-os.github.io/</url>
+  <url type="vcs-browser">https://github.com/Linxira-OS/linxira-recovery-diagnostics</url>
+  <url type="bugtracker">https://github.com/Linxira-OS/linxira-recovery-diagnostics/issues</url>
+  <url type="help">https://linxira-os.github.io/linxira-wiki/</url>
   <releases>
     <release version="0.2.0" date="2026-07-22" />
   </releases>
