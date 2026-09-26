@@ -86,6 +86,7 @@ class MainWindow(QMainWindow):
         tabs.addTab(self._overview(), "Overview")
         tabs.addTab(self._snapshots(), "Snapshots")
         tabs.addTab(self._repairs(), "Repairs")
+        tabs.addTab(self._workspace_guard(), "Workspace guard")
         tabs.addTab(self._support(), "Support report")
         self.setCentralWidget(tabs)
         about = QAction("About Linxira Recovery Diagnostics", self)
@@ -192,6 +193,29 @@ class MainWindow(QMainWindow):
         self.apply_worker.deleteLater()
         self.apply_worker = None
         self._repair_changed(self.repair_selector.currentText())
+
+    def _workspace_guard(self) -> QWidget:
+        page, layout = QWidget(), QVBoxLayout()
+        title = QLabel("Workspace guard")
+        title.setObjectName("pageTitle")
+        layout.addWidget(title)
+        guard = self.report.get("workspace_guard", {})
+        if not guard.get("configured"):
+            summary = QLabel("Not configured — run: linxira-config workspace-guard enable as root")
+        else:
+            total = guard.get("total_bytes", 0)
+            size = f"{total / 1024**3:.1f} GiB" if total >= 1024**3 else f"{total / 1024**2:.1f} MiB"
+            summary = QLabel(
+                f"{len(guard.get('workspaces', []))} workspace(s), "
+                f"{guard.get('snapshot_count', 0)} snapshot(s), {size} stored"
+            )
+            if not guard.get("store_mode_ok"):
+                summary.setText(summary.text() + " — store permissions are too open")
+        layout.addWidget(summary)
+        # 创建与恢复入口在 Repairs 页: 那两个 plan 已经登记在 PLAN_IDS 里。
+        layout.addWidget(_json_view(guard))
+        page.setLayout(layout)
+        return page
 
     def _support(self) -> QWidget:
         page, layout = QWidget(), QVBoxLayout()

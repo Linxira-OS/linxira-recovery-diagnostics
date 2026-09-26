@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import configparser
 import json
 import os
 import re
+import stat
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -16,6 +18,8 @@ from .system import SystemReader, package_version
 REPORT_SCHEMA = "org.linxira.recovery-diagnostics.report"
 LOW_SPACE_BYTES = 2 * 1024**3
 PACKAGE_PROCESSES = frozenset({"pacman", "makepkg", "pamac", "pamac-daemon", "yay", "paru", "pkcon", "packagekitd"})
+WORKSPACE_GUARD_CONF = "/etc/linxira/workspace-guard.conf"
+SNAPSHOT_DIRECTORY_RE = re.compile(r"^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$")
 
 
 def _command_evidence(result: CommandResult, include_stdout: bool = False) -> dict[str, Any]:
@@ -109,6 +113,7 @@ class EvidenceCollector:
             "snapshots": self._snapshots(),
             "pacman": self._pacman(),
             "keyring": self._keyring(),
+            "workspace_guard": self._workspace_guard(),
             "boot": self._boot(),
             "installed_target": self._chroot_readiness(bool(live_markers), mnt_mount),
             "warnings": self._warnings(bool(live_markers), root_mount, mnt_mount),
@@ -250,6 +255,66 @@ class EvidenceCollector:
             "host_arch_chroot": self.reader.exists("/usr/bin/arch-chroot"),
         }
         return {"applicable": live, "fixed_target": "/mnt", "checks": checks, "ready": bool(live and all(checks.values()))}
+
+    def _workspace_guard(self) -> dict[str, Any]:
+        """只读地报告守护状态。配置读不到就是读不到 —— 这是设计, 不是故障。"""
+        report: dict[str, Any] = {
+            "configured": False, "store": None, "store_present": False, "store_mode_ok": False,
+            "workspaces": [], "snapshot_count": 0, "total_bytes": 0,
+            "free_bytes": None, "free_low": False,
+        }
+        try:
+            raw = self.reader.read_text(WORKSPACE_GUARD_CONF, 65536)
+        except (OSError, ValueError):
+            return report
+        parser = configparser.ConfigParser()
+        try:
+            parser.read_string(raw)
+        except configparser.Error:
+            return report
+        store = parser.get("guard", "store", fallback="").strip()
+        if not store:
+            return report
+        report["configured"] = True
+        report["store"] = store
+        if not self.reader.exists(store):
+            return report
+        report["store_present"] = True
+        try:
+            mode = self.reader.stat(store).st_mode
+            report["store_mode_ok"] = stat.S_ISDIR(mode) and not stat.S_IMODE(mode) & 0o077
+        except (OSError, AttributeError):
+            report["store_mode_ok"] = False
+
+        snapshot_count = 0
+        total_bytes = 0
+        workspaces = []
+        for identifier in sorted(self.reader.entries(f"{store}/workspaces")):
+            registration = _read_json(self.reader, f"{store}/workspaces/{identifier}/registered.json")
+            if not isinstance(registration, dict) or not isinstance(registration.get("workspace_path"), str):
+                continue
+            count, size = 0, 0
+            for name in self.reader.entries(f"{store}/workspaces/{identifier}"):
+                if not SNAPSHOT_DIRECTORY_RE.match(name):
+                    continue
+                count += 1
+                manifest = _read_json(
+                    self.reader, f"{store}/workspaces/{identifier}/{name}/guard-manifest.json"
+                )
+                if isinstance(manifest, dict) and isinstance(manifest.get("byte_size"), int):
+                    size += manifest["byte_size"]
+            snapshot_count += count
+            total_bytes += size
+            workspaces.append({
+                "workspace_id": identifier, "workspace_path": registration["workspace_path"],
+                "snapshot_count": count, "total_bytes": size,
+            })
+        report["workspaces"] = workspaces
+        report["snapshot_count"] = snapshot_count
+        report["total_bytes"] = total_bytes
+        report["free_bytes"] = self.reader.free_bytes(store)
+        report["free_low"] = report["free_bytes"] is not None and report["free_bytes"] < LOW_SPACE_BYTES
+        return report
 
     @staticmethod
     def _warnings(live: bool, root: dict[str, Any] | None, mnt: dict[str, Any] | None) -> list[str]:

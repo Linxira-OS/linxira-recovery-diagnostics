@@ -15,7 +15,7 @@ def test_qt_smoke(make_collector, monkeypatch):
     collector, _, _ = make_collector(live=True)
     window = MainWindow(collector.collect())
     tabs = window.findChild(QTabWidget)
-    assert [tabs.tabText(index) for index in range(tabs.count())] == ["Overview", "Snapshots", "Repairs", "Support report"]
+    assert [tabs.tabText(index) for index in range(tabs.count())] == ["Overview", "Snapshots", "Repairs", "Workspace guard", "Support report"]
     apply_buttons = [button for button in window.findChildren(QPushButton) if button.text() == "Run diagnostic"]
     assert len(apply_buttons) == 1
     assert apply_buttons[0].isEnabled() is False

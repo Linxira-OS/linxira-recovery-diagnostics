@@ -15,13 +15,16 @@ from linxira_recovery_diagnostics.collector import EvidenceCollector
 @dataclass
 class FakeStat:
     st_mtime: float
+    st_mode: int = 0o755
 
 
 class FakeReader:
-    def __init__(self, files=None, directories=None, mtimes=None):
+    def __init__(self, files=None, directories=None, mtimes=None, modes=None, free=None):
         self.files = dict(files or {})
         self.directories = {key: tuple(value) for key, value in (directories or {}).items()}
         self.mtimes = dict(mtimes or {})
+        self.modes = dict(modes or {})
+        self.free = dict(free or {})
 
     def exists(self, path):
         return path in self.files or path in self.directories
@@ -29,7 +32,7 @@ class FakeReader:
     def stat(self, path):
         if path not in self.files and path not in self.directories:
             raise FileNotFoundError(path)
-        return FakeStat(self.mtimes.get(path, 0))
+        return FakeStat(self.mtimes.get(path, 0), self.modes.get(path, 0o755))
 
     def read_text(self, path, limit=1_000_000):
         if path not in self.files:
@@ -38,6 +41,9 @@ class FakeReader:
 
     def entries(self, path):
         return self.directories.get(path, ())
+
+    def free_bytes(self, path):
+        return self.free.get(path)
 
 
 class FakeRunner:

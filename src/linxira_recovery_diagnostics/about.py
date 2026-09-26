@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QVBoxLayout, QW
 
 
 APP_NAME = "Linxira Recovery Diagnostics"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 HOMEPAGE_URL = "https://linxira-os.github.io/"
 REPOSITORY_URL = "https://github.com/Linxira-OS/linxira-recovery-diagnostics"
 ISSUES_URL = f"{REPOSITORY_URL}/issues"

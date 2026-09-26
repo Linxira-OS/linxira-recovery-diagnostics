@@ -41,6 +41,17 @@ _PLANS: dict[str, dict[str, Any]] = {
         "effects": ["Recheck that the installed target at /mnt has required filesystems and tools.", "Report missing prerequisites for a future recovery backend."],
         "preconditions": ["The application is running in a recognized Linxira or Arch live environment.", "The installed root is mounted at the fixed target /mnt."],
     },
+    "org.linxira.guard.create-workspace-snapshot.v1": {
+        "title": "Create a workspace guard snapshot",
+        "effects": ["Copy one registered workspace, including its .git directory, into the configured guard store.", "Record a manifest describing the snapshot."],
+        "preconditions": ["A trusted root-helper receipt authorizes this exact plan.", "The workspace is registered and its path is an existing directory.", "The guard store is configured and has sufficient free space."],
+    },
+    "org.linxira.guard.restore-workspace-snapshot.v1": {
+        "title": "Restore a workspace guard snapshot to a new path",
+        "effects": ["Copy one guard snapshot into a caller-chosen new directory.", "Never overwrite or delete the live workspace."],
+        "preconditions": ["A trusted root-helper receipt authorizes this exact plan.", "The selected snapshot manifest is valid.", "The restore target is outside the workspace and outside the guard store."],
+        "receipt_required": True,
+    },
 }
 
 PLAN_IDS = tuple(_PLANS)
@@ -67,6 +78,15 @@ def make_plan(plan_id: str, report: dict[str, Any]) -> dict[str, Any]:
             reasons.append("system-clock-not-sane")
         if not prerequisites.get("network_interface_up") or not prerequisites.get("default_ipv4_route"):
             reasons.append("network-route-unavailable")
+    if plan_id == "org.linxira.guard.create-workspace-snapshot.v1":
+        guard = report.get("workspace_guard", {})
+        if not guard.get("configured"):
+            reasons.append("guard-store-not-configured")
+        if guard.get("free_low"):
+            reasons.append("guard-space-low")
+    if plan_id == "org.linxira.guard.restore-workspace-snapshot.v1":
+        if not report.get("workspace_guard", {}).get("snapshot_count"):
+            reasons.append("no-snapshots")
     return {
         "schema": PLAN_SCHEMA, "schema_version": 1, "plan_id": plan_id,
         **definition, "available": backend_ready, "unavailable_reasons": reasons,

@@ -6,7 +6,7 @@ from linxira_recovery_diagnostics.plans import PLAN_IDS, make_plan
 def test_only_read_only_diagnostics_have_a_system_backend(make_collector):
     collector, _, _ = make_collector(live=True)
     report = collector.collect()
-    assert len(PLAN_IDS) == 6
+    assert len(PLAN_IDS) == 8
     available = set()
     for plan_id in PLAN_IDS:
         plan = make_plan(plan_id, report)

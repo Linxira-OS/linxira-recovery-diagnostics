@@ -24,6 +24,13 @@ class SystemReader:
         except (FileNotFoundError, NotADirectoryError, PermissionError):
             return ()
 
+    def free_bytes(self, path: str) -> int | None:
+        try:
+            status = os.statvfs(path)
+        except OSError:
+            return None
+        return status.f_bavail * status.f_frsize
+
 
 def package_version(reader: SystemReader, package: str, root: str = "") -> str | None:
     base = f"{root}/var/lib/pacman/local" if root else "/var/lib/pacman/local"
